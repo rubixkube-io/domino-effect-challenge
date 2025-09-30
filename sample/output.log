@@ -1,0 +1,68 @@
+# The Domino Effect Challenge — Sample Output
+# Run: 6 ticks, threshold=0.70, seed=1337
+# Start: 2025-09-30T14:20:00+05:30
+
+[BOOT] Loaded 10 services from sample/services.json
+[BOOT] Dependency edges: A->B,C | B->D | C->E,F | E->G | F->G,H | H->I | J->B,I
+
+[TICK 1] 14:20:01
+[INFO] All services healthy (min health=0.92 on service-H)
+
+[TICK 2] 14:20:02
+[GLITCH] service-G health 0.99 -> 0.62 (random glitch)
+[ALERT] service-G fell below threshold (0.62 < 0.70)
+[BLAST] Propagation due to G:
+        - service-E degraded 0.96 -> 0.82 (depends on G)
+        - service-F degraded 0.94 -> 0.80 (depends on G)
+        - service-C degraded 0.99 -> 0.90 (depends on E,F)
+[PRIORITY] Root cause candidate: service-G (no upstream deps)
+[SUGGESTION] Fix service-G first to restore E,F,C stability
+[LOG] Incident#1 root=service-G impacted=[E,F,C] score=3
+
+[TICK 3] 14:20:03
+[HEAL] Auto-heal timer reached for service-G (cooldown=1 tick) -> health 0.88
+[RECOVERY] Upstream recovery after G heal:
+           - service-E 0.82 -> 0.90
+           - service-F 0.80 -> 0.88
+           - service-C 0.90 -> 0.95
+[STATUS] Min health now 0.88 (service-F)
+
+[TICK 4] 14:20:04
+[GLITCH] service-D health 0.97 -> 0.55
+[ALERT] service-D fell below threshold (0.55 < 0.70)
+[BLAST] Propagation due to D:
+        - service-B degraded 0.95 -> 0.73 (depends on D)
+        - service-A degraded 0.98 -> 0.90 (depends on B,C)
+        - service-J degraded 0.95 -> 0.85 (depends on B,I)
+[PRIORITY] Root cause candidate: service-D (no upstream deps)
+[SUGGESTION] Fix service-D first to stabilize B -> (A,J)
+[LOG] Incident#2 root=service-D impacted=[B,A,J] score=3
+
+[TICK 5] 14:20:05
+[GLITCH] service-H health 0.92 -> 0.68
+[ALERT] service-H fell below threshold (0.68 < 0.70)
+[BLAST] Propagation due to H:
+        - service-F degraded 0.88 -> 0.76 (depends on H)
+        - service-C degraded 0.95 -> 0.89 (depends on E,F)
+[PRIORITY] Multiple concurrent roots: {service-D, service-H}
+[PLAN] Priority order by blast-radius then depth:
+       1) service-D (impacts B->A,J)  2) service-H (impacts F->C)
+[SUGGESTION] Remediate service-D, then service-H
+[LOG] Incident#3 roots=[service-D,service-H] impacted=[B,A,J,F,C] score=5
+
+[TICK 6] 14:20:06
+[HEAL] service-D -> health 0.86 (manual or auto-heal)
+[RECOVERY] After D heal:
+           - service-B 0.73 -> 0.90
+           - service-A 0.90 -> 0.95
+           - service-J 0.85 -> 0.92
+[STATUS] service-H still below threshold at 0.68; pending remediation
+[SUMMARY] Active incidents=1 (root=service-H) | Resolved incidents=2
+
+# QUERY EXAMPLE
+# why is service-A degraded?
+# → service-A depends on service-B (0.90) and service-C (0.89).
+#   Earlier degradation was caused by service-D failure at TICK 4, which impacted B.
+#   After D heal at TICK 6, A recovered to 0.95.
+
+# End: 2025-09-30T14:20:06+05:30

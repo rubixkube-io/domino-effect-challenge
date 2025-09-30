@@ -1,0 +1,66 @@
+name: Validate Submission
+on:
+  issues:
+    types: [opened, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate:
+    if: ${{ contains(github.event.issue.labels.*.name, 'submission') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extract repo URL from issue body
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue?.body ?? "";
+            const match = body.match(/https?:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+/);
+            if (!match) {
+              core.setFailed("No valid GitHub repo URL found in issue.");
+            } else {
+              core.setOutput("repo_url", match[0]);
+            }
+
+      - name: Clone candidate repo (shallow)
+        if: ${{ success() }}
+        run: |
+          echo "Cloning ${{ steps.extract.outputs.repo_url }}"
+          git clone --depth=1 "${{ steps.extract.outputs.repo_url }}" candidate
+          ls -la candidate
+
+      - name: Basic checks
+        if: ${{ success() }}
+        run: |
+          cd candidate || exit 1
+          status=0
+          if [ ! -f README.md ] && [ ! -f readme.md ]; then
+            echo "::warning::README not found."
+            status=1
+          fi
+          find . -maxdepth 3 -iname "services.json" -print | sed 's/^/found: /' || true
+          find . -maxdepth 3 -iname "output.log" -print | sed 's/^/found: /' || true
+          ls -1 | grep -E "(\.py$|go\.mod|package\.json|pom\.xml|Cargo\.toml)" || echo "::notice::No standard language marker found."
+          exit $status
+
+      - name: Comment results
+        if: ${{ always() }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const repoUrl = '${{ steps.extract.outputs.repo_url }}' || 'N/A';
+            const msg = [
+              'Automated checks completed.',
+              `- Repo: ${repoUrl}`,
+              '- See workflow logs for details.'
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: msg
+            });

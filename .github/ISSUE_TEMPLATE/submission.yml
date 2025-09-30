@@ -1,0 +1,94 @@
+name: "Domino Effect Submission"
+description: "Submit your solution for the RubixKube Domino Effect Challenge."
+title: "Submission: <your-name> — <primary-language>"
+labels: ["submission"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the challenge! Please fill all required fields.
+        We’ll review your repo based on clarity, reasoning, and practicality.
+
+  - type: input
+    id: candidate_name
+    attributes:
+      label: Your Name
+      description: As you’d like it to appear in our records.
+      placeholder: "Jane Doe"
+    validations:
+      required: true
+
+  - type: input
+    id: github_profile
+    attributes:
+      label: GitHub Profile URL
+      placeholder: "https://github.com/janedoe"
+    validations:
+      required: true
+
+  - type: input
+    id: repo_url
+    attributes:
+      label: Solution Repository URL
+      description: Must be public. Include README with setup/run instructions.
+      placeholder: "https://github.com/janedoe/domino-solver"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: primary_language
+    attributes:
+      label: Primary Language
+      options:
+        - Python
+        - Go
+        - Node.js / TypeScript
+        - Java
+        - Rust
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: brief_architecture
+    attributes:
+      label: Approach Summary (2–6 bullets)
+      description: Key data structures, failure propagation logic, and RCA strategy.
+      placeholder: |
+        - Graph stored as adjacency list
+        - Health propagation: parent <- min(children) * decay
+        - RCA: find minimal cut / root(s) by indegree distance
+        - Auto-heal after X ticks with cooldown
+    validations:
+      required: true
+
+  - type: textarea
+    id: run
+    attributes:
+      label: How to Run
+      description: Setup steps and one-liners to run your simulation and queries.
+      placeholder: |
+        - `python -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt`
+        - `python solver.py --input sample/services.json --ticks 50 --threshold 0.7`
+        - `python solver.py "why is service-A failing?"`
+    validations:
+      required: true
+
+  - type: input
+    id: demo_video
+    attributes:
+      label: Demo Video (optional)
+      description: Loom/YouTube link (<5 min) if you recorded one.
+      placeholder: "https://loom.com/share/..."
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Confirmation
+      description: Please confirm the following.
+      options:
+        - label: I confirm this is my original work and the repository is public.
+          required: true

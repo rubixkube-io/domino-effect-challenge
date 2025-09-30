@@ -1,0 +1,14 @@
+# .github/workflows/triage.yml
+name: Triage Submissions
+on:
+  issues:
+    types: [opened]
+jobs:
+  label:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: submission
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
